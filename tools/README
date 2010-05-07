@@ -1,0 +1,15 @@
+The tools here are basically "maintainer tools":
+
+* create-cairo-defs.sh: This is used to create the cairo.def files in
+  cairo/src. It so much easier to write a shell script than trying to
+  do that with a batch file. When cairo is updated, this needs to be
+  ran in the src directory to update the defs file.
+
+* create-packager-bat.sh: This is used to create the gtkpackager batch
+  file. If any files should be added to the package, add it to this
+  file and run it to create the gtkpackager.bat script.
+
+  IMPORTANT: If you run this to update the packager script, MAKE SURE
+  you have a debug build done successfully, since the list is
+  generated from what files are actually built.
+

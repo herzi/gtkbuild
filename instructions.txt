@@ -1,0 +1,284 @@
+These instructions describe how to build GTK+ and its dependencies on
+Windows XP64 using Visual Studio 2005, Platform SDK, and the Driver
+Development Kit or Windows Driver Kit Server 2008 (the latter requires
+registration).
+
+
+Prerequisites
+=============
+
+Those are the necessary components:
+
+ * Perl 5.8 or 5.10, can be downloaded from activestate.com, for
+   example from this direct link:
+
+   http://downloads.activestate.com/ActivePerl/Windows/5.10/ActivePerl-5.10.0.1002-MSWin32-x64-283697.zip
+
+   Make sure that perl is added to the PATH after installing.
+
+ * Visual Studio 2005:
+
+   The Professional edition is required for 64-bit building with the
+   VS compiler. A 90-day trial can be downloaded here:
+
+   http://www.microsoft.com/downloads/details.aspx?displaylang=en&FamilyID=B2C27A7F-D875-47D5-B226-E2578A116E12
+
+   Note: Make sure to check the 64-bit checkbox when installing.
+
+   There is also a free "Express" version of VS 2005. This can be used
+   for 32-bit building:
+
+   http://go.microsoft.com/fwlink/?linkid=57034
+
+ * Platform SDK, install under C:\PSDK\. This is needed to get the
+   necessary header files:
+
+   http://download.microsoft.com/download/a/5/f/a5f0d781-e201-4ab6-8c6a-9bb4efed1e1a/PSDK-amd64.exe
+
+ * DDK or WDK. This is needed in order to build against the system
+   runtime. If you don't want to do that, this is not needed.
+
+   DDK, Driver Development Kit Server 2003 ISO, install under the default
+   location suggested by the installer:
+
+   http://download.microsoft.com/download/9/0/f/90f019ac-8243-48d3-91cf-81fc4093ecfd/1830_usa_ddk.iso
+
+   WDK, Windows Driver Kit Server 2008, install under the default
+   location:
+
+   https://connect.microsoft.com/site/sitehome.aspx?SiteID=148
+
+
+Getting started
+===============
+
+Unzip the source package and start a command prompt. Make sure to use
+the default Windows command prompt setups and not one that is added by
+one of the SDKs of Visual Studio installations.
+
+At the root of the unpacked folder, there are three scripts:
+gtkenv.bat, gtkbuild.bat, and gtkpackager.bat.
+
+* gtkenv.bat: This script sets up the build environment so that the
+  right set of compiler, libraries and headers are found during
+  compilation.
+
+* gtkbuild.bat: This is used to do the actual building.
+
+* gtkpackager.bat: This script creates a folder with the result of the
+  build: libraries, executables and headers for the involved
+  components.
+
+
+Setting up the environment
+==========================
+
+This needs to be done in every newly opened command prompt window that
+is going to be used for building the stack. Run the script without
+arguments to see how to use it. The script supports a number of
+different setups, the recommended one for building 64-bit binaries is
+the "vs8" versions (using Visual Studio 2005, also known as Visual
+Studio 8):
+
+  gtkenv x64 vs8 debug
+
+or for a release version:
+
+  gtkenv x64 vs8 release
+
+If you do not want to depend on the runtime shipped with Visual
+Studio, you must use the DDK or WDK:
+
+  gtkenv x64 vs8 release-ddk
+
+or
+
+  gtkenv x64 vs8 release-wdk
+
+The script will attempt to recognize an installation of Visual Studio
+and show an overview of the chosen configuration; if the environment
+cannot be setup, an error message will be shown.
+
+Note: It is not safe to try and switch environment within the same
+instance of a command prompt window. A new window should be opened if
+a different setup is needed.
+
+At this point, you can check if the build environment works properly by
+issuing the command:
+
+  gtkbuild verify
+
+This will try to compile a plain C test program and a Windows test
+program and run both. The first test prints "hello world" and the
+second pops up a dialog reading "hello world of 64bit!". At the
+end, the following text is printed in the command prompt window:
+
+  Verified build environment successfully!
+
+
+Building
+========
+
+Running the build script without arguments displays brief instructions
+on how to use it. The most common way to use it is:
+
+  gtkbuild all
+
+This builds the full stack from the bottom up, ending with GTK+,
+except for tests.
+
+  gtkbuild all check
+
+This builds and runs all the tests in the various components.
+
+  mkdir C:\gtk
+  gtkpackager
+
+This creates a folder with the binaries and header files for GTK+ for
+use in a project. See the section "Creating a package" below for more
+information about gtkpackager.
+
+  gtkbuild all clean
+
+This cleans out all the build files and other generated files, in
+order to start over fresh.
+
+You can also build just one package by exchanging "all" with the name
+of the package as shown when running the script without arguments.
+
+
+Build problems
+==============
+
+Nmake has a habit of continuing even after build failures, which can
+result in badly generated files left around. This will cause later
+build errors, so sometimes running either "gtkbuild <module> clean" in
+the root of the source folder, or "nmake -f makefile.msc clean" in the
+directory where the build fails is a good first try at fixing the
+build.
+
+
+Creating a package
+==================
+
+The script packager.bat is used like this:
+
+  gtkpackager
+
+The location of the distribution depends on the configuration chosen
+with gtkenv. For example, if you have built with the "x64 vs8 debug"
+configuration, the binaries will be copied into "C:\gtk\x64-vs-debug"
+directory. The directory must not exist before running the packager.
+
+The location of the distribution can be overridden by specifying a
+path on the commandline.
+
+The created folder will contain the following directory structure:
+
+  bin		executables and DLLs
+  lib		link time libraries
+  include	header files
+
+
+Testing inside Visual Studio
+============================
+
+The directory 'example' in the source package contains an example
+project for Visual Studio that can be used to build a program against
+a GTK+ build. If you open it in Visual Studio 2005 and GTK+ is built
+already, you can build the HelloGtk example which displays a simple
+dialog.
+
+The project file assumes that a 64-bit GTK+ vs8 debug build has been
+copied to C:\gtk\x64-vs8-debug (using gtkpackager).
+
+Select "Debug" and "x64" in the Configuration comboboxes.
+
+In order to run the produced executable either copy it to the location
+of your binaries, such as C:\gtk\x64-vs8-debug\bin, or add that path
+to your PATH.
+
+For details about how the project file was created, please look at the
+file creating-a-vs-project.txt in the same 'example' directory.
+
+
+Testing without Visual Studio
+=============================
+
+The "example" directory also contains an nmake makefile for testing
+outside of Visual Studio. This is useful in order to narrow down any
+issues that might occur.
+
+It is assumed that a 64-bit GTK+ build has been copied to
+C:\gtk\<config>, for example by using the provided gtkpackager tool.
+
+The makefile will pick up the right configuration from the gtkenv and
+try to build the example against that setup. The resulting executable
+will be named correspondingl, for example
+"hellogtk-x64-vs8-debug.exe".
+
+This is how to compile it:
+
+  cd example
+  nmake
+
+The resulting "hellogtk-*.exe" binary can then be started. Again, as
+above, it is assumed that the GTK+ binaries are in the path or that
+the executable is moved into the bin directory.
+
+If you want to override the configuration used, or if you are not
+compiling from inside a gtkenv setup, you can also specify it like in
+the following example:
+
+  nmake CONFIG=x64-vs8-release
+
+
+Known issues
+============
+
+* The MS-Windows theme engine is not part of the build setup. The
+  upstream nmake setup does not include the engine in the build setup.
+
+* The image loaders do not include support for the tiff and jpeg
+  formats, as those showed considerable issues in the upstream
+  makefiles. If this needs to be added, custom makefile need to be
+  written.
+
+* While the size of the various data types have been ported to the
+  model that Win64 uses (LLP64), the ABI (application binary
+  interface) of GLib, Pango and GTK+ functions and structures
+  involving longs under Win64 is currently in flux. The Win64 longs
+  have a different width (32-bit) than longs on other 64-bit platforms
+  (64-bit), which may require adaptions to the header files to change
+  type widths. Possibilities for solutions and ways to implement the
+  neccessary changes are being discussed by the upstream projects:
+
+    http://mail.gnome.org/archives/gtk-devel-list/2008-April/msg00110.html
+
+  We will integrate the upstream solution into our build tree as soon
+  as consensus is reached in the discussion. In the meantime, we do
+  not expect any ill effects resulting from the currently unadapted
+  header files, but we do expect an ABI break on Win64 when the final
+  solution is put into place. This means that applications that link
+  against GLib, Pango and GTK+ will need to be recompiled.
+
+
+Miscellaneous
+=============
+
+- Why is the PSDK and DDK/WDK needed?
+
+The PSDK is needed because Visual Studio 2005 doesn't ship the Win32
+API header files.
+
+The DDK or WDK is needed in order to build against the system's C
+runtime as opposed to the Visual Studio CRT. This is important because
+different editions of the runtime are not safe to use in parallel. For
+instance, file descriptors obtained from one runtime cannot be used in
+code that links to another runtime in the same process.
+
+The general consensus is to only use the system's runtime for
+production binaries, like the one from Visual C++ 6.0. In order to not
+have to use such an old compiler, the Windows Driver Kit (DDK/WDK) is
+used, since it comes with a runtime that is compatible with the system
+runtime.
